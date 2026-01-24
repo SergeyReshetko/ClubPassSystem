@@ -1,34 +1,35 @@
 package com.passsystem.controller;
 
-import com.passsystem.model.User;
-import com.passsystem.service.UserService;
-import lombok.AllArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.passsystem.dto.QrCodeDto;
+import com.passsystem.dto.UserDto;
+import com.passsystem.service.QrCodeService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
-@RequestMapping("/code")
-@AllArgsConstructor
+@RequestMapping("/api/v1/qr")
+@RequiredArgsConstructor
 public class QrCodeController {
     
-    private static final Logger logger = LoggerFactory.getLogger(QrCodeController.class);
+    private final QrCodeService qrCodeService;
     
-    private final UserService userService;
-    
-    @PutMapping("/{qrCode:\\d+}")
-    public ResponseEntity<User> updateQrCode(@PathVariable("qrCode") Long qrCode) {
-        logger.info("Called updateQrCode: qrCode= {}", qrCode);
-        var updated = userService.updateQrCode(qrCode);
-        
-        return ResponseEntity.ok(updated);
+    @GetMapping("/{qrCode}")
+    public ResponseEntity<QrCodeDto> getQrCodeByUUID(@PathVariable("qrCode") UUID qrCode) {
+        return ResponseEntity.status(HttpStatus.OK).body(qrCodeService.getQrCodeByUUID(qrCode));
     }
     
-    @DeleteMapping("/{id:\\d+}/delete")
-    public ResponseEntity<Void> deleteUserById(@PathVariable("id") Long id) {
-        logger.info("deleteUserById: id={}", id);
-        userService.deleteUser(id);
-        return ResponseEntity.ok().build();
+    @PutMapping("/{qrCode}")
+    public ResponseEntity<QrCodeDto> updateQrCode(@PathVariable("qrCode") UUID qrCode) {
+        var updated = qrCodeService.updateQrCode(qrCode);
+        return ResponseEntity.status(HttpStatus.OK).body(updated);
+    }
+    
+    @DeleteMapping("/{qrCode}")
+    public ResponseEntity<UserDto> deleteUserById(@PathVariable("qrCode") UUID qrCode) {
+        return ResponseEntity.status(HttpStatus.OK).body(qrCodeService.deleteUser(qrCode));
     }
 }

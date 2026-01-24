@@ -1,28 +1,41 @@
 package com.passsystem.service;
 
+import com.passsystem.dto.QrCodeDto;
+import com.passsystem.dto.UserDto;
 import com.passsystem.entity.QrCodeEntity;
 import com.passsystem.entity.UserEntity;
+import com.passsystem.filter.UserSearchFilter;
+import com.passsystem.mapper.QrCodeMapper;
 import com.passsystem.mapper.UserMapper;
-import com.passsystem.model.User;
-import com.passsystem.model.UserSearchFilter;
 import com.passsystem.repository.QrCodeRepository;
 import com.passsystem.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Service
 public class UserService {
+    
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
     
     private final UserRepository userRepository;
     private final QrCodeRepository qrCodeRepository;
     private final UserMapper userMapper;
+    private final QrCodeMapper qrCodeMapper;
+    @Value("${app.pageSize:10}")
+    private int pageSize;
+    @Value("${app.pageNumber:10}")
+    private int pageNumber;
     
-    public User getUserById(Long id) {
+    public UserDto getUserById(Long id) {
+        logger.info("getUserById: id={}", id);
         UserEntity userEntity = userRepository.findById(id)
                                         .orElseThrow(() -> new EntityNotFoundException(
                                                 "No user found with id " + id
@@ -30,21 +43,12 @@ public class UserService {
         return userMapper.toDomain(userEntity);
     }
     
-    public User addUser(User user) {
-        var entityUserToSave = userMapper.toEntity(user);
-        entityUserToSave = userRepository.save(entityUserToSave);
-        createQrCode(entityUserToSave);
-        
-        return userMapper.toDomain(entityUserToSave);
-    }
-    
-    
-    public List<User> searchAllByFilter(UserSearchFilter filter) {
-        int pageSize = filter.pageSize() != null ? filter.pageSize() : 10;
-        int pageNumber = filter.pageNumber() != null ? filter.pageNumber() : 0;
+    public List<UserDto> searchAllByFilter(UserSearchFilter filter) {
+        logger.info("Called searchAllByFilter");
+        this.pageSize = filter.pageSize();
+        this.pageNumber = filter.pageNumber();
         
         var pageable = Pageable.ofSize(pageSize).withPage(pageNumber);
-        
         List<UserEntity> allEntities = userRepository.searchAllByFilter(pageable);
         
         return allEntities.stream()
@@ -52,34 +56,22 @@ public class UserService {
                        .toList();
     }
     
-    public User updateQrCode(Long qrCode) {
-        var qrCodeEntity = qrCodeRepository.findQrCodeInfoById(qrCode);
-        UserEntity userEntity;
-        if (qrCodeEntity == null) {
-            throw new EntityNotFoundException("No qrCode found with id " + qrCode);
-        } else {
-            userEntity = findUserById(qrCodeEntity);
-            qrCodeRepository.deleteByUserId(userEntity.getId());
-        }
-        createQrCode(userEntity);
-        return userMapper.toDomain(userEntity);
+    public UserDto createUser(UserDto user) {
+        logger.info("addUser: user={}", user);
+        var entityUserToSave = userMapper.toEntity(user);
+        entityUserToSave = userRepository.save(entityUserToSave);
+        UserDto userDto = userMapper.toDomain(entityUserToSave);
+        userDto.setQrCodeDto(createQrCode(entityUserToSave));
+        
+        return userDto;
     }
     
-    public void deleteUser(Long qrCode) {
-        var qrCodeEntity = qrCodeRepository.findQrCodeInfoById(qrCode);
-        var userEntity = findUserById(qrCodeEntity);
-        userRepository.delete(userEntity);
-    }
-    
-    private void createQrCode(UserEntity userEntity) {
+    private QrCodeDto createQrCode(UserEntity userEntity) {
         QrCodeEntity qrCodeEntity = new QrCodeEntity();
         qrCodeEntity.setUserEntity(userEntity);
+        qrCodeEntity.generateQrCode();
         qrCodeRepository.save(qrCodeEntity);
-    }
-    
-    private UserEntity findUserById(QrCodeEntity qrCodeEntity) {
-        Long userId = qrCodeEntity.getUserEntity().getId();
-        return userRepository.findById(userId)
-                       .orElseThrow(() -> new EntityNotFoundException("Not found user by userId = " + userId));
+        
+        return qrCodeMapper.toDomain(qrCodeEntity);
     }
 }
