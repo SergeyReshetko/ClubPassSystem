@@ -36,8 +36,6 @@ public class UserController {
     
     @PostMapping
     public ResponseEntity<UserDto> createUser(@RequestBody UserDto user) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                       .header("test-header", "123")
-                       .body(userService.createUser(user));
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(user));
     }
 }

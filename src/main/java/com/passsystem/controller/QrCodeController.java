@@ -24,12 +24,13 @@ public class QrCodeController {
     
     @PutMapping("/{qrCode}")
     public ResponseEntity<QrCodeDto> updateQrCode(@PathVariable("qrCode") UUID qrCode) {
-        var updated = qrCodeService.updateQrCode(qrCode);
-        return ResponseEntity.status(HttpStatus.OK).body(updated);
+        var updated = qrCodeService.findByQrCode(qrCode);
+        return ResponseEntity.status(HttpStatus.OK).body(qrCodeService.updateQrCode(updated));
     }
     
     @DeleteMapping("/{qrCode}")
     public ResponseEntity<UserDto> deleteUserById(@PathVariable("qrCode") UUID qrCode) {
-        return ResponseEntity.status(HttpStatus.OK).body(qrCodeService.deleteUser(qrCode));
+        var deleted = qrCodeService.findByQrCode(qrCode);
+        return ResponseEntity.status(HttpStatus.OK).body(qrCodeService.deleteUser(deleted));
     }
 }

@@ -2,12 +2,10 @@ package com.passsystem.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
 @RequiredArgsConstructor
 @NoArgsConstructor
 @Entity

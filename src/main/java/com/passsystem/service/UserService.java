@@ -10,14 +10,17 @@ import com.passsystem.mapper.UserMapper;
 import com.passsystem.repository.QrCodeRepository;
 import com.passsystem.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
@@ -49,13 +52,14 @@ public class UserService {
         this.pageNumber = filter.pageNumber();
         
         var pageable = Pageable.ofSize(pageSize).withPage(pageNumber);
-        List<UserEntity> allEntities = userRepository.searchAllByFilter(pageable);
+        Page<UserEntity> allEntities = userRepository.findAll(pageable);
         
         return allEntities.stream()
                        .map(userMapper::toDomain)
                        .toList();
     }
     
+    @Transactional
     public UserDto createUser(UserDto user) {
         logger.info("addUser: user={}", user);
         var entityUserToSave = userMapper.toEntity(user);
@@ -69,7 +73,7 @@ public class UserService {
     private QrCodeDto createQrCode(UserEntity userEntity) {
         QrCodeEntity qrCodeEntity = new QrCodeEntity();
         qrCodeEntity.setUserEntity(userEntity);
-        qrCodeEntity.generateQrCode();
+        qrCodeEntity.setQrCode(UUID.randomUUID());
         qrCodeRepository.save(qrCodeEntity);
         
         return qrCodeMapper.toDomain(qrCodeEntity);

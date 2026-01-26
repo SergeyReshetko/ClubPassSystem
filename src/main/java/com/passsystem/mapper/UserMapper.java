@@ -14,7 +14,7 @@ public class UserMapper {
         userDto.setLastName(userEntity.getLastName());
         userDto.setMiddleName(userEntity.getMiddleName());
         if (userEntity.getQrCodeEntity() != null) {
-            userDto.setQrCodeDto(userEntity.getQrCodeEntity().toDto());
+            userDto.setQrCodeDto(new QrCodeMapper().toDomain(userEntity.getQrCodeEntity()));
         }
         return userDto;
     }

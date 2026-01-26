@@ -1,15 +1,16 @@
 package com.passsystem.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.passsystem.dto.QrCodeDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.UUID;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
@@ -28,21 +29,5 @@ public class QrCodeEntity {
     @JoinColumn(name = "user_id", referencedColumnName = "user_id", nullable = false)
     @JsonBackReference("user-qrcode")
     private UserEntity userEntity;
-    
-    public void generateQrCode() {
-        this.qrCode = UUID.randomUUID();
-    }
-    
-    public QrCodeDto toDto() {
-        if (userEntity == null) {
-            return null;
-        }
-        
-        QrCodeDto qrCodeDto = new QrCodeDto();
-        qrCodeDto.setId(id);
-        qrCodeDto.setQrCode(qrCode);
-        
-        return qrCodeDto;
-    }
 }
 
